@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 9000
 
@@ -47,6 +47,8 @@ async function run() {
         const userCollection = client.db('employee').collection('users')
         const reviewCollection = client.db('employee').collection('reviews')
         const firedCollection = client.db('employee').collection('fireds')
+        const workCollection = client.db('employee').collection('works')
+
 
 
         //  token Related APIs
@@ -55,6 +57,7 @@ async function run() {
             const token = jwt.sign(data, process.env.ACCESS_TOKEN_SECURE, {
                 expiresIn: '10h'
             })
+            // console.log(token)
             res.send({ token })
         })
 
@@ -112,12 +115,61 @@ async function run() {
         })
 
 
+        // Employee related APIs
+
+        app.post('/work-sheet', async (req, res) => {
+            const data = req.body;
+            const result = await workCollection.insertOne(data);
+            res.send(result)
+
+        });
+
+        app.get('/work-sheet/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await workCollection.find(query).sort({ date: -1 }).toArray();
+            res.send(result)
+        })
+        app.patch('/work-sheet/:id', async (req, res) => {
+            const { _id, ...data } = req.body;
+            const id = req.params.id;
+            // console.log("data", data, "id is", id)
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = { $set: data }
+            const result = await workCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
+
+        app.delete('/work-sheet/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await workCollection.deleteOne(query);
+            res.send(result)
+        })
+
+
         // admin related
         app.post('/fireds', async (req, res) => {
             const email = req.body;
             const result = await firedCollection.insertOne(email)
             res.send(result)
         })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
