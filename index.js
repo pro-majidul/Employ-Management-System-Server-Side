@@ -158,12 +158,51 @@ async function run() {
         })
 
         // hr related api 
+
+
+        // for payment btn
         app.post('/payrole', async (req, res) => {
-            const data = req.body;
-            const result = await payroleCollection.insertOne(data);
+            const { month, year, email, ...data } = req.body;
+            const existingPayment = await payroleCollection.findOne({
+                email,
+                month,
+                year,
+            });
+
+            if (existingPayment) {
+                return res.status(400).send({
+                    message: `Payment for ${month}/${year} has already been made for this employee.`,
+                });
+            }
+            const paymentData = {
+                month,
+                year,
+                email,
+                paymentDate: new Date(),
+                ...data,
+            };
+            const result = await payroleCollection.insertOne(paymentData)
+
+            res.send(result)
+
+        })
+
+        //  for progress 
+        app.get('/work-sheet', async (req, res) => {
+            const result = await workCollection.find().toArray()
             res.send(result)
         })
 
+        //for specific user email 
+        app.get('/details/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const result = await userCollection.findOne(query);
+            res.send(result)
+
+        })
+
+        //  for user verified 
         app.patch('/users/employees/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id)
