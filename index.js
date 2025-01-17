@@ -196,11 +196,43 @@ async function run() {
         //for specific user email 
         app.get('/details/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { email }
-            const result = await userCollection.findOne(query);
-            res.send(result)
 
-        })
+
+            const result = await userCollection.aggregate([
+                {
+                    $match: { email: email } // Filter user by email
+                },
+                {
+                    $lookup: {
+                        from: 'payroles',
+                        localField: 'email',
+                        foreignField: 'email',
+                        as: 'paymentHistory'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$paymentHistory',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$email',
+                        name: { $first: '$name' },
+                        designation: { $first: '$designation' },
+                        image : {$first : '$image'},
+                        salaries: { $push: '$paymentHistory.salary' },
+                        months: { $push: '$paymentHistory.month' },
+                        years: { $push: '$paymentHistory.year' }
+                    }
+                }
+            ]).toArray();
+
+            res.send(result[0]);
+
+        });
+
 
         //  for user verified 
         app.patch('/users/employees/:id', async (req, res) => {
