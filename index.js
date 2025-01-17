@@ -48,6 +48,7 @@ async function run() {
         const reviewCollection = client.db('employee').collection('reviews')
         const firedCollection = client.db('employee').collection('fireds')
         const workCollection = client.db('employee').collection('works')
+        const payroleCollection = client.db('employee').collection('payroles')
 
 
 
@@ -109,9 +110,18 @@ async function run() {
             res.send(result)
         })
 
+
+
         app.get('/users', async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result)
+        })
+
+        app.get('/employee-list', async (req, res) => {
+            const query = { role: 'Employee' }
+            const data = await userCollection.find(query).toArray();
+            res.send(data)
+
         })
 
 
@@ -144,6 +154,25 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await workCollection.deleteOne(query);
+            res.send(result)
+        })
+
+        // hr related api 
+        app.post('/payrole', async (req, res) => {
+            const data = req.body;
+            const result = await payroleCollection.insertOne(data);
+            res.send(result)
+        })
+
+        app.patch('/users/employees/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = { _id: new ObjectId(id) }
+            const { isVerified } = req.body;
+            const updateDoc = {
+                $set: { isVerified }
+            }
+            const result = await userCollection.updateOne(query, updateDoc)
             res.send(result)
         })
 
