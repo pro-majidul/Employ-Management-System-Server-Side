@@ -189,7 +189,28 @@ async function run() {
 
         //  for progress 
         app.get('/work-sheet', async (req, res) => {
-            const result = await workCollection.find().toArray()
+            const { name, month } = req.query;
+            const query = {};
+            if (name) {
+                query.email = name;
+            }
+
+            // if (month) {
+            //     query.date = { $regex: `^${month}`, $options: 'i' };
+            // }
+            if (month) {
+                const [monthName, year] = month.split(' '); // Split "January 2025" into ["January", "2025"]
+                const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth(); // Get the 0-based month index
+                const startDate = new Date(year, monthIndex, 1); // First day of the month
+                const endDate = new Date(year, monthIndex + 1, 1); // First day of the next month
+
+                // Query for the date range
+                query.date = {
+                    $gte: startDate.toISOString(), // Match dates greater than or equal to startDate
+                    $lt: endDate.toISOString(), // Match dates less than endDate
+                };
+            }
+            const result = await workCollection.find(query).toArray();
             res.send(result)
         })
 
@@ -221,7 +242,7 @@ async function run() {
                         _id: '$email',
                         name: { $first: '$name' },
                         designation: { $first: '$designation' },
-                        image : {$first : '$image'},
+                        image: { $first: '$image' },
                         salaries: { $push: '$paymentHistory.salary' },
                         months: { $push: '$paymentHistory.month' },
                         years: { $push: '$paymentHistory.year' }
@@ -254,6 +275,25 @@ async function run() {
             const result = await firedCollection.insertOne(email)
             res.send(result)
         })
+
+        //all verifiesd employe with hr
+        app.get('/all-employee-list', async (req, res) => {
+            const employee = await userCollection.find({ isVerified: true }).toArray();
+            res.send(employee)
+        })
+
+        ///make hr
+
+        app.patch('/admin/make-hr/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: { role: 'HR' }
+            };
+            const result = await userCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
+
 
 
 
