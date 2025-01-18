@@ -196,8 +196,20 @@ async function run() {
         })
 
         app.get('/payrole', async (req, res) => {
-            const result = await payroleCollection.find().toArray()
-            res.send(result)
+            const page = parseInt(req.query.page) || 0;
+            const limit = parseInt(req.query.limit) || 10;
+            const startIndex = page * limit;
+            const payroleData = await payroleCollection.find()
+                .skip(startIndex)
+                .limit(limit)
+                .toArray();
+            const totalCount = await payroleCollection.countDocuments();
+            const totalPages = Math.ceil(totalCount / limit);
+            res.send({
+                data: payroleData,
+                totalPages,
+
+            })
         })
 
         //  for progress 
