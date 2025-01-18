@@ -186,7 +186,6 @@ async function run() {
                 month,
                 year,
                 email,
-                paymentDate: new Date(),
                 ...data,
             };
             const result = await payroleCollection.insertOne(paymentData)
