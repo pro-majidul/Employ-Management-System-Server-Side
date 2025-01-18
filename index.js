@@ -195,12 +195,17 @@ async function run() {
 
         })
 
+        app.get('/payrole', async (req, res) => {
+            const result = await payroleCollection.find().toArray()
+            res.send(result)
+        })
+
         //  for progress 
         app.get('/work-sheet', async (req, res) => {
             const { name, month } = req.query;
             const query = {};
             if (name) {
-                query.email = name;
+                query.name = name;
             }
 
             // if (month) {
