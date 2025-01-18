@@ -100,13 +100,21 @@ async function run() {
 
         app.post('/users', async (req, res) => {
             const data = req.body;
-            const email = req.body.email;
-            const query = { email: email };
-            const isFired = await firedCollection.findOne(query)
-            if (isFired) {
-                return req.send({ message: 'user is Fired by Admin and user can not login' })
-            }
             const result = await userCollection.insertOne(data);
+            res.send(result)
+        })
+
+        app.patch('/isFired', async (req, res) => {
+            const email = req.body.email;
+            const filter = { email: email, isFired: true };
+            const isFired = await userCollection.findOne(filter)
+            if (isFired) {
+                return res.status(404).send({ message: 'user is Fired by Admin and user can not login' })
+            }
+            const query = { email: email }
+            const updateDoc = { $set: { loginTime: new Date() } }
+            const options = { upsert: true };
+            const result = await userCollection.updateOne(query, updateDoc, options);
             res.send(result)
         })
 
@@ -291,6 +299,20 @@ async function run() {
                 $set: { role: 'HR' }
             };
             const result = await userCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
+        //fired user
+
+        app.patch('/admin/fire/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    isFired: true
+                }
+            }
+            const result = await userCollection.updateOne(query, updateDoc, options);
             res.send(result)
         })
 
