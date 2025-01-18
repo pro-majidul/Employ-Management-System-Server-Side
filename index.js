@@ -315,7 +315,18 @@ async function run() {
             const result = await userCollection.updateOne(query, updateDoc, options);
             res.send(result)
         })
+        //for update salarey
+        app.patch('/admin/update-salary/:id', async (req, res) => {
+            const id = req.params.id;
+            const { newSalary } = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: { salary: parseInt(newSalary) }
 
+            }
+            const result = await userCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
 
 
 
