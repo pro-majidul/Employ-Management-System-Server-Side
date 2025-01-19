@@ -100,21 +100,31 @@ async function run() {
 
 
         app.post('/users', async (req, res) => {
-            const data = req.body;
-            const result = await userCollection.insertOne(data);
+            const { role, ...data } = req.body;
+            let info = {}
+            if (role === 'HR') {
+                info = { isVerified: true, role, ...data }
+            }
+            const result = await userCollection.insertOne(info);
             res.send(result)
         })
 
         app.put('/users', async (req, res) => {
             const { email, ...data } = req.body;
             const query = { email: email };
+            // const filter = { email: email, isFired: true }
+            const filter = { email: email, isFired: true };
+            const isFired = await userCollection.findOne(filter)
+            if (isFired) {
+                return res.status(404).send({ message: 'user is Fired by Admin and user can not login' })
+            }
             const isEmail = await userCollection.findOne(query);
             if (isEmail) {
                 return res.status(404).send({ message: 'user already added in DB , couldnot create balance' })
             }
             const option = { upsert: true }
             const updateDoc = {
-                $set: { email, ...data }
+                $set: { email, ...data, loginTime: new Date() }
             }
             const result = await userCollection.updateOne(query, updateDoc, option)
             res.send(result)
@@ -219,7 +229,7 @@ async function run() {
                 .skip(startIndex)
                 .limit(limit)
                 .toArray();
-            const totalCount = await payroleCollection.countDocuments();
+            const totalCount = await payroleCollection.estimatedDocumentCount()
             const totalPages = Math.ceil(totalCount / limit);
             res.send({
                 data: payroleData,
@@ -315,7 +325,7 @@ async function run() {
 
         //all verifiesd employe with hr
         app.get('/all-employee-list', async (req, res) => {
-            const employee = await userCollection.find({ isVerified: true }).toArray();
+            const employee = await userCollection.find({ isVerified: true, }).toArray();
             res.send(employee)
         })
 
@@ -360,21 +370,21 @@ async function run() {
         // payment Intern APIs
 
 
-        // app.post('/create-payment-intent', async (req, res) => {
-        //     const { price } = req.body;
-        //     const amount = parseInt(price * 100);
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100);
 
-        //     const paymentIntent = await stripe.paymentIntents.create({
-        //         amount,
-        //         currency: 'usd',
-        //         payment_method_types: ['card'],
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount,
+                currency: 'usd',
+                payment_method_types: ['card'],
 
 
-        //     })
-        //     res.send({
-        //         ClientSecret: paymentIntent.client_secret
-        //     })
-        // })
+            })
+            res.send({
+                ClientSecret: paymentIntent.client_secret
+            })
+        })
 
 
 
