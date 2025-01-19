@@ -192,6 +192,24 @@ async function run() {
             res.send(result)
         })
 
+
+        // for paymentHistory
+        app.get('/payment-history/:email', async (req, res) => {
+            const email = req.params.email;
+            const { page = 1, limit = 5 } = req.query;
+            const query = { email: email, isPayment: true }
+            const result = await payroleCollection.find(query).sort({ month: 1, year: 1 }).skip((page - 1) * limit).limit(parseInt(limit)).toArray()
+            const total = await payroleCollection.countDocuments({email})
+            res.send({
+                result,
+                pagination: {
+                    total,
+                    page: parseInt(page),
+                    pages: Math.ceil(total / limit),
+                },
+            })
+        },)
+
         // hr related api 
 
 
@@ -387,6 +405,16 @@ async function run() {
         })
 
 
+        // update payrole data after pay 
+        app.patch('/payrole', async (req, res) => {
+            const { id, isPayment, salary, ...data } = req.body;
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: { data, salary, isPayment, }
+            }
+            const result = await payroleCollection.updateOne(query, updateDoc);
+            res.send(result)
+        })
 
 
 
