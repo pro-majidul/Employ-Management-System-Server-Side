@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.Payment_Secure_key);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 9000
@@ -102,6 +103,22 @@ async function run() {
             const data = req.body;
             const result = await userCollection.insertOne(data);
             res.send(result)
+        })
+
+        app.put('/users', async (req, res) => {
+            const { email, ...data } = req.body;
+            const query = { email: email };
+            const isEmail = await userCollection.findOne(query);
+            if (isEmail) {
+                return res.status(404).send({ message: 'user already added in DB , couldnot create balance' })
+            }
+            const option = { upsert: true }
+            const updateDoc = {
+                $set: { email, ...data }
+            }
+            const result = await userCollection.updateOne(query, updateDoc, option)
+            res.send(result)
+
         })
 
         app.patch('/isFired', async (req, res) => {
@@ -218,10 +235,6 @@ async function run() {
             if (name) {
                 query.name = name;
             }
-
-            // if (month) {
-            //     query.date = { $regex: `^${month}`, $options: 'i' };
-            // }
             if (month) {
                 const [monthName, year] = month.split(' '); // Split "January 2025" into ["January", "2025"]
                 const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth(); // Get the 0-based month index
@@ -282,7 +295,7 @@ async function run() {
         //  for user verified 
         app.patch('/users/employees/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id)
+            // console.log(id)
             const query = { _id: new ObjectId(id) }
             const { isVerified } = req.body;
             const updateDoc = {
@@ -343,6 +356,26 @@ async function run() {
             const result = await userCollection.updateOne(query, updateDoc);
             res.send(result)
         })
+
+        // payment Intern APIs
+
+
+        // app.post('/create-payment-intent', async (req, res) => {
+        //     const { price } = req.body;
+        //     const amount = parseInt(price * 100);
+
+        //     const paymentIntent = await stripe.paymentIntents.create({
+        //         amount,
+        //         currency: 'usd',
+        //         payment_method_types: ['card'],
+
+
+        //     })
+        //     res.send({
+        //         ClientSecret: paymentIntent.client_secret
+        //     })
+        // })
+
 
 
 
