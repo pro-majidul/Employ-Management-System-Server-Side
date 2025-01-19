@@ -91,7 +91,7 @@ async function run() {
             const query = { email: email };
             const isEmployee = await userCollection.findOne(query);
             if (!isEmployee.role === 'Employee') {
-                res.status(403).send({ message: 'forbidden Access can not verify HR' })
+                res.status(403).send({ message: 'forbidden Access can not verify Employee' })
             }
         }
 
@@ -164,7 +164,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/employee-list', async (req, res) => {
+        app.get('/employee-list',Verification, verifyHR, async (req, res) => {
             const query = { role: 'Employee' }
             const data = await userCollection.find(query).toArray();
             res.send(data)
@@ -174,20 +174,20 @@ async function run() {
 
         // Employee related APIs
 
-        app.post('/work-sheet', Verification, async (req, res) => {
+        app.post('/work-sheet', Verification,VerifyEmployee, async (req, res) => {
             const data = req.body;
             const result = await workCollection.insertOne(data);
             res.send(result)
 
         });
 
-        app.get('/work-sheet/:email', Verification, async (req, res) => {
+        app.get('/work-sheet/:email', Verification,VerifyEmployee, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await workCollection.find(query).sort({ date: -1 }).toArray();
             res.send(result)
         })
-        app.patch('/work-sheet/:id', Verification, async (req, res) => {
+        app.patch('/work-sheet/:id', Verification,VerifyEmployee, async (req, res) => {
             const { _id, ...data } = req.body;
             const id = req.params.id;
             // console.log("data", data, "id is", id)
@@ -197,7 +197,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/work-sheet/:id', Verification, async (req, res) => {
+        app.delete('/work-sheet/:id', Verification, VerifyEmployee, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await workCollection.deleteOne(query);
@@ -206,7 +206,7 @@ async function run() {
 
 
         // for paymentHistory
-        app.get('/payment-history/:email', Verification, async (req, res) => {
+        app.get('/payment-history/:email', Verification, VerifyEmployee, async (req, res) => {
             const email = req.params.email;
             const { page = 1, limit = 5 } = req.query;
             const query = { email: email, isPayment: true }
@@ -226,7 +226,7 @@ async function run() {
 
 
         // for payment btn
-        app.post('/payrole', Verification, async (req, res) => {
+        app.post('/payrole', Verification,verifyHR, async (req, res) => {
             const { month, year, email, ...data } = req.body;
             const existingPayment = await payroleCollection.findOne({
                 email,
@@ -251,7 +251,7 @@ async function run() {
 
         })
 
-        app.get('/payrole', Verification, async (req, res) => {
+        app.get('/payrole', Verification,verifyAdmin, async (req, res) => {
             const page = parseInt(req.query.page) || 0;
             const limit = parseInt(req.query.limit) || 10;
             const startIndex = page * limit;
@@ -269,7 +269,7 @@ async function run() {
         })
 
         //  for progress 
-        app.get('/work-sheet', Verification, async (req, res) => {
+        app.get('/work-sheet', Verification,verifyHR, async (req, res) => {
             const { name, month } = req.query;
             const query = {};
             if (name) {
@@ -292,7 +292,7 @@ async function run() {
         })
 
         //for specific user email 
-        app.get('/details/:email', Verification, async (req, res) => {
+        app.get('/details/:email', Verification,verifyHR, async (req, res) => {
             const email = req.params.email;
 
 
@@ -333,7 +333,7 @@ async function run() {
 
 
         //  for user verified 
-        app.patch('/users/employees/:id', Verification, async (req, res) => {
+        app.patch('/users/employees/:id', Verification,verifyHR, async (req, res) => {
             const id = req.params.id;
             // console.log(id)
             const query = { _id: new ObjectId(id) }
@@ -354,14 +354,14 @@ async function run() {
         })
 
         //all verifiesd employe with hr
-        app.get('/all-employee-list', Verification, async (req, res) => {
+        app.get('/all-employee-list', Verification,verifyAdmin, async (req, res) => {
             const employee = await userCollection.find({ isVerified: true, }).toArray();
             res.send(employee)
         })
 
         ///make hr
 
-        app.patch('/admin/make-hr/:id', Verification, async (req, res) => {
+        app.patch('/admin/make-hr/:id', Verification,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const updateDoc = {
@@ -372,7 +372,7 @@ async function run() {
         })
         //fired user
 
-        app.patch('/admin/fire/:id', Verification, async (req, res) => {
+        app.patch('/admin/fire/:id', Verification,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const options = { upsert: true };
@@ -385,7 +385,7 @@ async function run() {
             res.send(result)
         })
         //for update salarey
-        app.patch('/admin/update-salary/:id', Verification, async (req, res) => {
+        app.patch('/admin/update-salary/:id', Verification,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const { newSalary } = req.body;
             const query = { _id: new ObjectId(id) };
@@ -418,7 +418,7 @@ async function run() {
 
 
         // update payrole data after pay 
-        app.patch('/payrole', Verification, async (req, res) => {
+        app.patch('/payrole', Verification, verifyAdmin , async (req, res) => {
             const { id, isPayment, salary, ...data } = req.body;
             const query = { _id: new ObjectId(id) }
             const updateDoc = {
