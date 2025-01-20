@@ -360,12 +360,6 @@ async function run() {
             res.send(result)
         })
 
-        // for dropdown employee name and date-time 
-
-        // app.get('/all-work-sheet-employee', async (req, res) => {
-        //     const query ={ role :'Employee' ,}
-        // })
-
 
         // admin related
         app.post('/fireds', Verification, async (req, res) => {
