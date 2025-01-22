@@ -105,7 +105,7 @@ async function run() {
 
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { email : email };
+            const query = { email: email };
             const result = await userCollection.findOne(query);
             res.send(result)
         })
@@ -126,11 +126,25 @@ async function run() {
         // user related APIs 
 
 
+
+        //create huseraccount related 
+
+        // app.post('/user', async (req, res) => {
+        //     const data = req.body;
+        //     const result = await userCollection.insertOne(data);
+        //     res.send(result)
+        // })
+
+
+
+
         app.post('/users', async (req, res) => {
             const { role, ...data } = req.body;
             let info = {}
             if (role === 'HR') {
                 info = { isVerified: true, role, ...data }
+            } else {
+                info = { isVerified: false, role, ...data }
             }
             const result = await userCollection.insertOne(info);
             res.send(result)
@@ -225,7 +239,7 @@ async function run() {
             const email = req.params.email;
             const { page = 1, limit = 5 } = req.query;
             const query = { email: email, isPayment: true }
-            const result = await payroleCollection.find(query).sort({ month: 1, year: 1 }).skip((page - 1) * limit).limit(parseInt(limit)).toArray()
+            const result = await payroleCollection.find(query).sort({ date: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).toArray()
             const total = await payroleCollection.countDocuments({ email })
             res.send({
                 result,
