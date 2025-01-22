@@ -239,7 +239,7 @@ async function run() {
             const email = req.params.email;
             const { page = 1, limit = 5 } = req.query;
             const query = { email: email, isPayment: true }
-            const result = await payroleCollection.find(query).sort({ date: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).toArray()
+            const result = await payroleCollection.find(query).sort({ year: 1, month: 1, }).skip((page - 1) * limit).limit(parseInt(limit)).toArray()
             const total = await payroleCollection.countDocuments({ email })
             res.send({
                 result,
